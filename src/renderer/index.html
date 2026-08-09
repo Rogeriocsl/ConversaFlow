@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ConversaFlow</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --card: #0f1629;
+        --muted: #9fb0d8;
+        --muted-2: #aeb8d8;
+        --text: #e6e7ee;
+        --border: #1e2747;
+        --border-2: #243055;
+        --primary: #2a6df4;
+        --primary-weak: #2a6df422;
+        --success: #2db071;
+        --warning: #f5a524;
+        --danger: #ef4444;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        --radius: clamp(12px, 1.2vw, 16px);
+        --radius-sm: clamp(8px, 1vw, 10px);
+        --fs-base: clamp(14px, 1.05vw, 16px);
+        --fs-sm: clamp(12px, 0.9vw, 14px);
+        --fs-xs: clamp(11px, 0.8vw, 12px);
+        --pad-sm: clamp(8px, 0.9vw, 12px);
+        --pad-md: clamp(12px, 1.2vw, 16px);
+        --gap: clamp(8px, 1vw, 16px);
+      }
+      [data-theme="light"] {
+        --bg: #f6f8ff;
+        --card: #fff;
+        --muted: #5b6b91;
+        --muted-2: #62719b;
+        --text: #0b1020;
+        --border: #e7eaf5;
+        --border-2: #dde4fb;
+        --primary: #2a6df4;
+        --primary-weak: #2a6df41a;
+        --success: #1ea667;
+        --warning: #b8860b;
+        --danger: #cf2e2e;
+        --shadow: 0 8px 24px rgba(21, 41, 79, 0.12);
+      }
+      body[data-density="compact"] {
+        --fs-base: clamp(13px, 0.95vw, 15px);
+        --fs-sm: clamp(11px, 0.85vw, 13px);
+        --fs-xs: clamp(10px, 0.75vw, 12px);
+        --pad-sm: clamp(6px, 0.7vw, 10px);
+        --pad-md: clamp(8px, 0.9vw, 12px);
+        --gap: clamp(6px, 0.8vw, 12px);
+        --radius: clamp(8px, 0.8vw, 12px);
+        --radius-sm: clamp(6px, 0.6vw, 8px);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial,
+          sans-serif;
+        font-size: var(--fs-base);
+        line-height: 1.35;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        padding: var(--pad-sm) var(--pad-md);
+        display: grid;
+        grid-template-columns: 1fr auto auto auto;
+        gap: var(--gap);
+        align-items: center;
+        box-shadow: var(--shadow);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand h3 {
+        margin: 0;
+        font-size: clamp(16px, 1.2vw, 18px);
+      }
+      .status {
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: var(--fs-xs);
+        background: var(--primary-weak);
+        border: 1px solid var(--border-2);
+        color: var(--text);
+      }
+      .header-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        padding: var(--pad-sm) calc(var(--pad-sm) + 4px);
+        border-radius: var(--radius-sm);
+        background: var(--primary);
+        border: none;
+        color: #fff;
+        cursor: pointer;
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn.secondary {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border-2);
+      }
+      .btn.danger {
+        background: var(--danger);
+      }
+      .icon-btn {
+        width: clamp(34px, 3vw, 38px);
+        height: clamp(34px, 3vw, 38px);
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        border: 1px solid var(--border-2);
+        background: transparent;
+        cursor: pointer;
+        color: var(--text);
+      }
+
+      .kpi-bar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .kpi-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border-2);
+        background: transparent;
+        color: var(--muted-2);
+        font-size: var(--fs-xs);
+      }
+      .kpi-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .kpi-dot.ok {
+        background: var(--success);
+      }
+      .kpi-dot.warn {
+        background: var(--warning);
+      }
+      .kpi-dot.err {
+        background: var(--danger);
+      }
+      .kpi-dot.idle {
+        background: #94a3b8;
+      }
+
+      nav.tabs {
+        padding: 10px var(--pad-md);
+        gap: 8px;
+        display: flex;
+        flex-wrap: nowrap;
+        border-bottom: 1px solid var(--border);
+        overflow: auto;
+      }
+      .tab {
+        appearance: none;
+        border: none;
+        background: transparent;
+        color: var(--muted-2);
+        padding: 10px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+      }
+      .tab .badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        transform: translate(40%, -40%);
+        min-width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: var(--primary);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+        padding: 0 6px;
+      }
+      .tab.active {
+        color: var(--text);
+        background: var(--primary-weak);
+        border-color: var(--border-2);
+      }
+
+      main {
+        padding: var(--pad-md);
+      }
+      .grid {
+        display: grid;
+        gap: clamp(12px, 1.2vw, 18px);
+        grid-template-columns: minmax(300px, 36%) 1fr;
+        align-items: start;
+      }
+      @media (min-width: 1400px) {
+        .grid {
+          grid-template-columns: minmax(360px, 28%) 1fr;
+        }
+      }
+      @media (max-width: 1100px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: var(--pad-md);
+        box-shadow: var(--shadow);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .subtle {
+        color: var(--muted-2);
+        font-size: var(--fs-sm);
+      }
+      label {
+        font-size: var(--fs-xs);
+        color: var(--muted-2);
+        display: block;
+        margin-bottom: 6px;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 12px 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-2);
+        background: transparent;
+        color: var(--text);
+        outline: none;
+        font-size: 1rem;
+      }
+      input:focus,
+      textarea:focus,
+      select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-weak);
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .qr-wrap {
+        border: 1px dashed var(--border-2);
+        border-radius: 12px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: clamp(220px, 40vh, 420px);
+        padding: 10px;
+        position: relative;
+      }
+      img.qr {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+      }
+      img.qr:not([src]),
+      img.qr[src=""] {
+        display: none;
+      }
+      .qr-placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: #0b1020;
+        text-align: center;
+        padding: 12px;
+      }
+      .progress-bar {
+        width: 100%;
+        height: clamp(8px, 1.2vh, 12px);
+        background: transparent;
+        border: 1px solid var(--border-2);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .progress-bar > div {
+        height: 100%;
+        width: 0%;
+        background: var(--primary);
+        transition: width 0.25s ease;
+      }
+      .kpi {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: var(--fs-xs);
+        color: var(--muted-2);
+      }
+      .log {
+        height: clamp(220px, 42vh, 460px);
+        overflow: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: var(--fs-xs);
+        background: transparent;
+        border-radius: 12px;
+        padding: 10px;
+        border: 1px solid var(--border-2);
+      }
+      pre.small {
+        background: transparent;
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        padding: 8px;
+        white-space: pre-wrap;
+        max-height: 160px;
+        overflow: auto;
+        color: var(--muted-2);
+        font-size: var(--fs-xs);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border-2);
+        color: var(--muted-2);
+        font-size: var(--fs-xs);
+        background: transparent;
+      }
+      .chip.ok {
+        border-color: rgba(45, 176, 113, 0.35);
+        color: #bbf7d0;
+        background: rgba(45, 176, 113, 0.08);
+      }
+      .chip.warn {
+        border-color: rgba(245, 165, 36, 0.35);
+        color: #fde68a;
+        background: rgba(245, 165, 36, 0.08);
+      }
+      .chip.danger {
+        border-color: rgba(239, 68, 68, 0.35);
+        color: #fecaca;
+        background: rgba(239, 68, 68, 0.08);
+      }
+      .img-preview {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .img-preview img {
+        width: clamp(48px, 6vw, 64px);
+        height: clamp(48px, 6vw, 64px);
+        border-radius: 10px;
+        border: 1px solid var(--border-2);
+        object-fit: cover;
+      }
+      .toast-root {
+        position: fixed;
+        right: var(--pad-md);
+        bottom: var(--pad-md);
+        display: grid;
+        gap: 8px;
+        z-index: 100;
+      }
+      .toast {
+        background: var(--card);
+        border: 1px solid var(--border-2);
+        border-left: 4px solid var(--primary);
+        padding: 10px 12px;
+        border-radius: 10px;
+        min-width: 220px;
+        max-width: min(420px, 88vw);
+        box-shadow: var(--shadow);
+      }
+      .toast.success {
+        border-left-color: var(--success);
+      }
+      .toast.danger {
+        border-left-color: var(--danger);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        padding: var(--pad-md);
+      }
+      .modal {
+        width: min(860px, 96%);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        box-shadow: var(--shadow);
+        max-height: 86vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .modal header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .modal header h4 {
+        margin: 0;
+        font-size: clamp(16px, 1.1vw, 18px);
+      }
+      .modal .modal-body {
+        padding: 14px;
+        overflow: auto;
+      }
+      .modal .modal-footer {
+        position: sticky;
+        bottom: 0;
+        padding: 12px 14px;
+        border-top: 1px solid var(--border);
+        background: linear-gradient(
+          to top,
+          rgba(15, 22, 41, 0.9),
+          rgba(15, 22, 41, 0.75)
+        );
+      }
+      .meta-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .preview-grid {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 12px;
+      }
+      @media (max-width: 800px) {
+        .preview-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .preview-card {
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .preview-box {
+        border: 1px dashed var(--border-2);
+        border-radius: 10px;
+        padding: 10px;
+        min-height: 120px;
+        white-space: pre-wrap;
+      }
+      .img-box {
+        border: 1px dashed var(--border-2);
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        min-height: 180px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .img-box img {
+        max-width: 100%;
+        max-height: 280px;
+        border-radius: 10px;
+      }
+      .inline-chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+      }
+      .chip-btn {
+        border: 1px solid var(--border-2);
+        background: transparent;
+        border-radius: 999px;
+        padding: 6px 8px;
+        cursor: pointer;
+        color: var(--muted-2);
+        font-size: var(--fs-xs);
+      }
+      .chip-btn:hover {
+        border-color: var(--primary);
+        color: #fff;
+        background: var(--primary-weak);
+      }
+      .vars-row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .kbd {
+        display: inline-block;
+        border: 1px solid var(--border-2);
+        border-bottom-width: 2px;
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--muted-2);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+          class="ico"
+        >
+          <path
+            d="M7 11h10l-2 8H9l-2-8Z"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path
+            d="M8.5 11a3.5 3.5 0 1 1 7 0"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </svg>
+        <h3>LC Bot</h3>
+      </div>
+      <span id="status" class="status">iniciando…</span>
+
+      <div class="kpi-bar">
+        <span class="kpi-chip" id="kpi-conn"
+          ><span class="kpi-dot idle"></span> Conexão</span
+        >
+        <span class="kpi-chip" id="kpi-sched">⏰ Horário: —</span>
+        <span class="kpi-chip" id="kpi-cooldown">🕒 Cooldown: —</span>
+      </div>
+
+      <div class="header-actions">
+        <button
+          id="theme-toggle"
+          class="icon-btn"
+          title="Alternar tema"
+          aria-label="Alternar tema"
+        >
+          <svg
+            id="theme-icon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <path
+              d="M12 3v2m0 14v2m9-9h-2M5 12H3m13.95 6.364-1.414-1.414M6.464 7.05 5.05 5.636m12.9 0-1.414 1.414M6.464 16.95l-1.414 1.414"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+          </svg>
+        </button>
+        <button
+          id="density-toggle"
+          class="icon-btn"
+          title="Modo compacto"
+          aria-label="Alternar modo compacto"
+          aria-pressed="false"
+        >
+          <svg
+            id="density-icon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+        <button id="logout" class="btn secondary">
+          Deslogar / Limpar sessão
+        </button>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Navegação">
+      <button
+        class="tab active"
+        data-tab="conexao"
+        role="tab"
+        aria-selected="true"
+      >
+        <span class="ico">🔌</span> Conexão
+      </button>
+      <button class="tab" data-tab="auto" role="tab">
+        <span class="ico">🤖</span> Automação
+      </button>
+      <button class="tab" data-tab="individual" role="tab">
+        <span class="ico">💬</span> Individual
+      </button>
+      <button class="tab" data-tab="disparo" role="tab">
+        <span class="ico">📣</span> Disparo
+      </button>
+      <button class="tab" data-tab="listas" role="tab">
+        <span class="ico">📋</span> Listas
+      </button>
+      <button class="tab" data-tab="priv" role="tab" id="tab-priv">
+        <span class="ico">🛑</span> Privacidade
+        <span class="badge" id="badge-priv" style="display: none">0</span>
+      </button>
+      <button class="tab" data-tab="logs" role="tab">
+        <span class="ico">📜</span> Logs
+      </button>
+      <button class="tab" data-tab="licenca" role="tab">
+        <span class="ico">🔑</span> Licença
+      </button>
+    </nav>
+
+    <main>
+      <div class="grid">
+        <!-- Conexão -->
+        <section class="panel active" data-panel="conexao">
+          <div class="card">
+            <h4>Conexão</h4>
+            <p class="muted">
+              Escaneie o QR no primeiro acesso. Sessão é lembrada
+              automaticamente.
+            </p>
+            <div class="qr-wrap">
+              <img
+                id="qr"
+                class="qr"
+                alt="QR Code"
+                style="width: 400px; height: 400px"
+              />
+              <div
+                id="qr-placeholder"
+                class="qr-placeholder"
+                aria-live="polite"
+              >
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M7 7h10v10H7z"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  />
+                  <path
+                    d="M7 3v4M17 3v4M7 17v4M17 17v4M3 7h4M3 17h4M17 7h4M17 17h4"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  />
+                </svg>
+                <p id="qr-placeholder-text">Aguardando QR…</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Auto -->
+        <section class="panel" data-panel="auto">
+          <div class="card">
+            <h4>Menu automático</h4>
+            <p class="subtle">
+              Crie o menu que será apresentado nas conversas diretas. Grupos são ignorados.
+            </p>
+
+            <div class="row" style="gap: 10px; align-items: center; margin-bottom: 14px">
+              <input id="automation-enabled" type="checkbox" checked />
+              <label for="automation-enabled" style="margin: 0">Ativar automação por menu</label>
+            </div>
+
+            <label for="auto-text">Saudação do menu</label>
+            <textarea
+              id="auto-text"
+              rows="5"
+              placeholder="Olá! Como podemos ajudar?"
+            ></textarea>
+
+            <label for="automation-options" style="margin-top: 14px">Opções e respostas</label>
+            <p class="subtle">Use uma linha por opção: <code>número | título | resposta</code>. Para atendimento humano, acrescente <code>| atendente</code>.</p>
+            <textarea id="automation-options" rows="9" placeholder="1 | Conhecer nossos produtos | Confira nosso catálogo.&#10;9 | Falar com atendente | Aguarde um momento. | atendente"></textarea>
+
+            <div class="row" style="gap: 12px; margin-top: 12px">
+              <div style="flex: 1">
+                <label for="automation-invalid">Mensagem para opção inválida</label>
+                <input id="automation-invalid" value="Não entendi essa opção." />
+              </div>
+              <div style="width: 220px">
+                <label for="automation-timeout">Sessão expira após</label>
+                <select id="automation-timeout">
+                  <option value="5">5 minutos</option>
+                  <option value="15">15 minutos</option>
+                  <option value="30" selected>30 minutos</option>
+                  <option value="60">1 hora</option>
+                  <option value="240">4 horas</option>
+                  <option value="1440">24 horas</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- chips de placeholders -->
+            <div class="inline-chips">
+              <button class="chip-btn" id="chip-insert-nome">{{nome}}</button>
+              <button class="chip-btn" id="chip-insert-first">{{first}}</button>
+            </div>
+
+            <div
+              class="row"
+              style="justify-content: space-between; margin-top: 8px"
+            >
+              <span id="auto-count" class="subtle">0 caracteres</span>
+              <div class="row" style="gap: 8px">
+                <button id="auto-preview-btn" class="btn secondary">
+                  Pré-visualizar
+                </button>
+                <button id="auto-save" class="btn" title="Ctrl/⌘+S">
+                  Salvar
+                </button>
+              </div>
+            </div>
+
+            <!-- Cooldown -->
+            <div
+              class="row"
+              style="gap: 12px; align-items: flex-end; margin-top: 14px"
+            >
+              <div style="flex: 1">
+                <label for="auto-cooldown"
+                  >Intervalo de proteção após opt-out</label
+                >
+                <select id="auto-cooldown">
+                  <option value="300000">5 minutos</option>
+                  <option value="900000">15 minutos</option>
+                  <option value="1800000">30 minutos</option>
+                  <option value="3600000">1 hora</option>
+                  <option value="7200000">2 horas</option>
+                  <option value="14400000">4 horas</option>
+                  <option value="28800000">8 horas</option>
+                  <option value="43200000">12 horas</option>
+                  <option value="86400000">24 horas</option>
+                </select>
+              </div>
+              <div style="width: 220px">
+                <label>&nbsp;</label>
+                <div id="auto-cooldown-note" class="chip">Atual: 1 hora</div>
+              </div>
+            </div>
+
+            <!-- Horário -->
+            <div
+              class="row"
+              style="gap: 12px; align-items: flex-end; margin-top: 16px"
+            >
+              <div class="row" style="gap: 10px; align-items: center">
+                <input id="auto-sched-enabled" type="checkbox" />
+                <label for="auto-sched-enabled" style="margin: 0"
+                  >Restringir por horário de funcionamento</label
+                >
+              </div>
+            </div>
+            <div
+              class="row"
+              style="gap: 12px; align-items: flex-end; margin-top: 8px"
+            >
+              <div style="flex: 1">
+                <label for="auto-sched-start">Início</label>
+                <input id="auto-sched-start" type="time" value="13:00" />
+              </div>
+              <div style="flex: 1">
+                <label for="auto-sched-end">Fim</label>
+                <input id="auto-sched-end" type="time" value="19:00" />
+              </div>
+              <div style="width: 260px">
+                <label>&nbsp;</label>
+                <div id="auto-sched-note" class="chip">Horário: desativado</div>
+              </div>
+            </div>
+
+            <!-- Variáveis de teste -->
+            <div class="row" style="gap: 12px; margin-top: 16px">
+              <div style="flex: 1">
+                <label for="ctx-name">Nome completo (para {{nome}})</label>
+                <input id="ctx-name" placeholder="Maria da Silva" />
+              </div>
+              <div style="flex: 1">
+                <label for="ctx-first">Primeiro nome (para {{first}})</label>
+                <input id="ctx-first" placeholder="Maria" />
+              </div>
+              <div class="row" style="gap: 8px; align-items: center">
+                <input id="ctx-autofirst" type="checkbox" checked />
+                <label for="ctx-autofirst" class="subtle" style="margin: 0"
+                  >Derivar primeiro nome automaticamente</label
+                >
+              </div>
+            </div>
+
+            <!-- Prévia & Teste -->
+            <div style="margin-top: 14px">
+              <label>Prévia renderizada</label>
+              <div id="auto-preview" class="preview-box subtle">—</div>
+            </div>
+            <div class="row" style="gap: 12px; margin-top: 8px">
+              <div style="flex: 1">
+                <label for="auto-test-to"
+                  >Enviar teste para (DDI+DDD+Número)</label
+                >
+                <input
+                  id="auto-test-to"
+                  placeholder="5511999998888"
+                  inputmode="numeric"
+                  autocomplete="off"
+                />
+              </div>
+              <div>
+                <label>&nbsp;</label>
+                <button id="auto-test-send" class="btn secondary">
+                  Enviar teste
+                </button>
+              </div>
+            </div>
+
+            <div id="auto-status" class="subtle" style="margin-top: 10px"></div>
+          </div>
+        </section>
+
+        <!-- Individual -->
+        <section class="panel" data-panel="individual">
+          <div class="card">
+            <h4>Enviar mensagem (individual)</h4>
+            <div class="row">
+              <div style="flex: 1">
+                <label for="to">Número (com DDI, ex: 5511999998888)</label>
+                <input
+                  id="to"
+                  placeholder="5511999998888"
+                  inputmode="numeric"
+                  autocomplete="off"
+                />
+              </div>
+              <div>
+                <label>&nbsp;</label>
+                <button id="send" class="btn" title="Ctrl/⌘+Enter">
+                  Enviar
+                </button>
+              </div>
+            </div>
+            <div style="margin-top: 8px">
+              <label for="message">Mensagem</label>
+              <textarea id="message" rows="4" placeholder="Olá!"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Disparo -->
+        <section class="panel" data-panel="disparo">
+          <div class="card">
+            <h4>Disparo em massa</h4>
+            <div class="stack">
+              <div class="row" style="gap: 12px">
+                <div style="flex: 1">
+                  <label for="bulk-mode">Destino</label>
+                  <select id="bulk-mode">
+                    <option value="chats">Conversas ativas (não-grupos)</option>
+                    <option value="contacts">Meus contatos (não-grupos)</option>
+                    <option value="custom">
+                      Lista personalizada (aba "Listas")
+                    </option>
+                  </select>
+                </div>
+                <div style="flex: 1">
+                  <label for="bulk-image">Imagem (opcional)</label>
+                  <input id="bulk-image" type="file" accept="image/*" />
+                  <div
+                    id="dz-bulk-image"
+                    class="dropzone"
+                    style="margin-top: 8px"
+                  >
+                    Arraste e solte a imagem aqui
+                  </div>
+                  <div
+                    class="img-preview"
+                    id="bulk-image-preview"
+                    style="display: none; margin-top: 8px"
+                  >
+                    <img id="bulk-image-thumb" alt="Prévia da imagem" />
+                    <span class="subtle" id="bulk-image-name"></span>
+                    <button id="bulk-image-remove" class="btn secondary">
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label for="bulk-text"
+                  >Texto (suporta {{nome}}, {{first}})</label
+                >
+                <textarea
+                  id="bulk-text"
+                  rows="4"
+                  placeholder="Olá {{first}}, tudo bem?"
+                ></textarea>
+                <div
+                  class="row"
+                  style="justify-content: space-between; margin-top: 6px"
+                >
+                  <span id="bulk-text-count" class="subtle">0 caracteres</span>
+                </div>
+              </div>
+
+              <div class="row" style="gap: 12px; align-items: center">
+                <div style="flex: 1">
+                  <label for="rate-delay">Intervalo entre envios</label>
+                  <input
+                    id="rate-delay"
+                    type="range"
+                    min="300"
+                    max="10000"
+                    step="100"
+                    value="1500"
+                  />
+                </div>
+                <div style="width: 180px">
+                  <label>&nbsp;</label>
+                  <div
+                    id="rate-delay-label"
+                    class="chip"
+                    title="Quanto menor, maior o risco de bloqueio."
+                  >
+                    1.5s • seguro
+                  </div>
+                </div>
+              </div>
+
+              <div class="row" style="gap: 12px; align-items: center">
+                <div style="flex: 1">
+                  <label for="rate-jitter">Jitter (variação aleatória)</label>
+                  <input
+                    id="rate-jitter"
+                    type="range"
+                    min="0"
+                    max="50"
+                    step="1"
+                    value="20"
+                  />
+                </div>
+                <div style="width: 180px">
+                  <label>&nbsp;</label>
+                  <div
+                    id="rate-jitter-label"
+                    class="chip"
+                    title="Aleatoriza o intervalo para parecer humano."
+                  >
+                    20%
+                  </div>
+                </div>
+              </div>
+
+              <div class="subtle">
+                Dica: intervalos menores ↑ velocidade, mas ↑ risco de bloqueio.
+                Sugestão ≥ <b>1.0s</b>.
+              </div>
+
+              <div
+                class="row"
+                style="gap: 8px; flex-wrap: wrap; margin-top: 6px"
+              >
+                <button id="bulk-preview" class="btn secondary">
+                  Pré-visualizar alcance
+                </button>
+                <button id="bulk-send" class="btn">Enviar disparo</button>
+                <button id="bulk-pause" class="btn secondary" disabled>
+                  Pausar
+                </button>
+                <button id="bulk-cancel" class="btn danger" disabled>
+                  Cancelar
+                </button>
+                <span id="bulk-state" class="chip">—</span>
+              </div>
+
+              <div class="row" style="gap: 16px; align-items: center">
+                <div class="progress-wrap" style="flex: 1">
+                  <div class="progress-bar"><div id="bulk-bar"></div></div>
+                  <div id="bulk-stats" class="kpi">
+                    0/0 enviado(s) • 0 falha(s)
+                  </div>
+                </div>
+                <div class="donut" id="bulk-donut" style="--pct: 0">
+                  <span id="bulk-donut-label">0%</span>
+                </div>
+              </div>
+
+              <div id="bulk-preview-info" class="subtle">—</div>
+              <div class="row" style="gap: 8px; align-items: center">
+                <pre
+                  id="bulk-preview-list"
+                  class="small"
+                  style="display: none; flex: 1"
+                ></pre>
+                <button
+                  id="bulk-preview-copy"
+                  class="btn secondary"
+                  style="display: none"
+                >
+                  Copiar lista
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Listas -->
+        <section class="panel" data-panel="listas">
+          <div class="card">
+            <h4>Lista personalizada</h4>
+            <p class="subtle">
+              Cole números (um por linha) ou carregue CSV (colunas:
+              <code>number,name</code>).
+            </p>
+
+            <div class="row" style="gap: 12px; align-items: flex-start">
+              <div style="flex: 1">
+                <label for="list-text">Colar lista</label>
+                <textarea
+                  id="list-text"
+                  rows="8"
+                  placeholder="5511999998888, Maria&#10;5521998888777&#10;..."
+                ></textarea>
+              </div>
+              <div style="width: 280px">
+                <label for="list-file">CSV</label>
+                <input id="list-file" type="file" accept=".csv,text/csv" />
+                <div class="subtle" style="margin-top: 6px">
+                  Exemplo:<br />number,name<br />5511999998888,Maria
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="row"
+              style="justify-content: space-between; margin-top: 8px"
+            >
+              <span id="list-count" class="subtle">0 itens</span>
+              <button id="list-clear" class="btn secondary">
+                Limpar lista
+              </button>
+            </div>
+
+            <div style="margin-top: 10px">
+              <label>Prévia</label>
+              <pre
+                id="list-preview"
+                class="small"
+                style="max-height: 200px"
+              ></pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- Privacidade -->
+        <section class="panel" data-panel="priv">
+          <div class="card">
+            <h4>Privacidade (opt-out)</h4>
+            <p class="subtle">
+              Quem responder <b>SAIR/PARAR/STOP/CANCELAR</b> entra aqui e não
+              recebe novas mensagens.
+            </p>
+            <div
+              class="row"
+              style="justify-content: space-between; margin-bottom: 8px"
+            >
+              <span class="subtle">Blacklist</span>
+              <button id="priv-clear" class="btn secondary">Limpar tudo</button>
+            </div>
+            <div id="priv-list" class="log" style="height: 260px"></div>
+          </div>
+        </section>
+
+        <!-- Logs -->
+        <section class="panel" data-panel="logs">
+          <div class="card">
+            <div class="log-actions">
+              <h4 style="margin: 0">Logs</h4>
+            </div>
+            <div class="log-toolbar">
+              <input
+                id="log-search"
+                class="grow"
+                placeholder="Filtrar logs (palavra-chave)"
+              />
+              <button id="log-copy" class="btn secondary">Copiar</button>
+              <button id="log-download" class="btn secondary">
+                Baixar .txt
+              </button>
+              <button id="clear-log" class="btn secondary">Limpar</button>
+            </div>
+            <div id="log" class="log" role="log" aria-live="polite"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Licença -->
+      <section class="panel" data-panel="licenca">
+        <div class="card">
+          <h4>Licença</h4>
+          <div class="license-box">
+            <div class="warn">
+              <div><b>Status:</b> <span id="lic-status">—</span></div>
+              <div><b>Expira em:</b> <span id="lic-exp">—</span></div>
+              <div><b>Cliente:</b> <span id="lic-name">—</span></div>
+              <div>
+                <b>ID da máquina:</b>
+                <span id="lic-machine" class="mono">—</span>
+              </div>
+            </div>
+            <div class="license-grid">
+              <div>
+                <label for="lic-key">Cole sua licença</label>
+                <textarea
+                  id="lic-key"
+                  class="textarea-lic"
+                  placeholder="Cole aqui o licenseKey fornecido pelo emissor"
+                ></textarea>
+                <div class="row" style="gap: 8px; margin-top: 6px">
+                  <button id="lic-save" class="btn">Salvar licença</button>
+                  <button id="lic-reset" class="btn secondary">
+                    Remover licença
+                  </button>
+                </div>
+                <div id="lic-note" class="subtle" style="margin-top: 6px"></div>
+              </div>
+              <div>
+                <label>Como funciona</label>
+                <ul class="subtle" style="margin: 0 0 8px 16px">
+                  <li>
+                    Licenças são assinadas pelo emissor (offline, sem servidor).
+                  </li>
+                  <li>Válida somente para este computador (ID da máquina).</li>
+                  <li>Ao expirar, o app bloqueia até nova licença.</li>
+                </ul>
+                <div class="chip" id="lic-remaining">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== Modal de Prévia do Disparo (novo visual) ===== -->
+    <div id="confirm-backdrop" class="modal-backdrop" aria-hidden="true">
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-title"
+      >
+        <header>
+          <h4 id="confirm-title">Prévia do disparo</h4>
+          <button id="confirm-close" class="icon-btn" aria-label="Fechar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+            </svg>
+          </button>
+        </header>
+
+        <div class="modal-body">
+          <div class="meta-row">
+            <span class="chip" id="confirm-total">Destinatários: —</span>
+            <span class="chip" id="confirm-eta">Duração: —</span>
+            <span class="chip ok" id="confirm-risk">Risco: baixo</span>
+          </div>
+
+          <div class="preview-grid">
+            <div class="preview-card">
+              <label class="subtle">Mensagem que será enviada</label>
+              <div id="confirm-text" class="preview-box">(sem texto)</div>
+              <div
+                class="row"
+                style="justify-content: space-between; margin-top: 8px"
+              >
+                <span id="confirm-text-count" class="subtle">0 caracteres</span>
+                <div class="vars-row" id="confirm-vars"></div>
+              </div>
+            </div>
+
+            <div class="preview-card">
+              <label class="subtle">Imagem (opcional)</label>
+              <div class="img-box">
+                <img
+                  id="confirm-img"
+                  alt="Prévia da imagem selecionada"
+                  style="display: none"
+                />
+                <div id="confirm-noimg" class="subtle">
+                  Nenhuma imagem selecionada.
+                </div>
+              </div>
+              <div id="confirm-img-meta" class="subtle" style="margin-top: 8px">
+                —
+              </div>
+            </div>
+          </div>
+
+          <div class="subtle" style="margin-top: 10px">
+            Dica: grupos são ignorados automaticamente. Ajuste intervalo e
+            jitter na aba <b>Disparo</b> para reduzir bloqueios.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div
+            class="row"
+            style="
+              gap: 8px;
+              align-items: center;
+              flex: 1;
+              color: var(--muted-2);
+              font-size: var(--fs-xs);
+            "
+          >
+            <span class="kbd">Esc</span> cancelar &nbsp;•&nbsp;
+            <span class="kbd">Ctrl/⌘ + Enter</span> confirmar
+          </div>
+          <div class="row" style="gap: 8px">
+            <button id="confirm-cancel" class="btn secondary">Cancelar</button>
+            <button id="confirm-go" class="btn">Confirmar envio</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast-root" class="toast-root" aria-live="polite"></div>
+    <script src="renderer.js"></script>
+  </body>
+</html>
