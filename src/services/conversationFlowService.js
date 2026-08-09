@@ -37,15 +37,16 @@ function sanitizeFlowDefinition(flow) {
 }
 
 class ConversationFlowService {
-  constructor({ settingsService, log = () => {} }) {
+  constructor({ settingsService, persistenceService = null, log = () => {} }) {
     this.settings = settingsService;
     this.log = log;
+    this.persistence = persistenceService;
     this.sessions = new Map();
   }
 
   config() { return this.settings.get().automation; }
   normalize(value) { return String(value || '').trim().toLocaleLowerCase('pt-BR'); }
-  reset(contactId) { this.sessions.delete(contactId); }
+  async reset(contactId) { this.sessions.delete(contactId); await this.persistence?.removeSession(contactId); }
 
   getFlow() {
     const config = this.config();
@@ -89,7 +90,7 @@ class ConversationFlowService {
     return { type: 'message', text: this.renderNode(flow.nodes[session.currentNodeId]), event: `menu:${session.currentNodeId}` };
   }
 
-  handle(contactId, text) {
+  async handle(contactId, text) {
     const config = this.config();
     if (!config.enabled) return { type: 'disabled' };
     const flow = this.getFlow();
@@ -111,7 +112,12 @@ class ConversationFlowService {
     if (option.action === 'handoff') {
       session.handedOff = true;
       this.log(`👤 Atendimento humano solicitado por ${contactId}.`);
-      return { type: 'message', text: option.response || config.handoffMessage, event: 'handoff' };
+      return this.saveInteraction(contactId, session, text, { type: 'message', text: option.response || config.handoffMessage, event: 'handoff' });
+    }
+    if (option.target && flow.nodes[option.target]) {
+      session.history.push(node.id);
+      session.currentNodeId = option.target;
+      return this.saveInteraction(contactId, session, text, { type: 'message', text: this.renderNode(flow.nodes[option.target]), event: `node:${option.target}` });
     }
     if (option.target && flow.nodes[option.target]) {
       session.history.push(node.id);

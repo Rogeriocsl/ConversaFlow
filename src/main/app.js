@@ -10,6 +10,7 @@ const { LicenseService } = require('../services/licenseService');
 const { WhatsAppService } = require('../services/whatsappService');
 const { BulkMessageService } = require('../services/bulkMessageService');
 const { ConversationFlowService } = require('../services/conversationFlowService');
+const { ConversationPersistenceService } = require('../services/conversationPersistenceService');
 const fs = require('fs');
 
 function loadPublicKey(rootPath) {
@@ -46,10 +47,12 @@ function startApplication(rootPath) {
   onChanged: value => send('license:status', value)
 });
     const privacy = new PrivacyService({ settingsService: settings, onEvent: events.privacy, log: events.log });
-    const conversation = new ConversationFlowService({ settingsService: settings, log: events.log });
+    const conversationPersistence = new ConversationPersistenceService({ userDataPath, log: events.log });
+    await conversationPersistence.load();
+    const conversation = new ConversationFlowService({ settingsService: settings, persistenceService: conversationPersistence, log: events.log });
     const whatsapp = new WhatsAppService({ app, clientId: process.env.CLIENT_ID || 'conversaflow', dataPath: process.env.LOCALAUTH_DATA_PATH || path.join(userDataPath, '.wwebjs_auth'), settingsService: settings, privacyService: privacy, licenseService: license, conversationFlowService: conversation, events });
     const bulk = new BulkMessageService({ whatsappService: whatsapp, settingsService: settings, privacyService: privacy, licenseService: license, onProgress: value => send('bulk:progress', value), log: events.log });
-    services = { settings, license, privacy, conversation, whatsapp, bulk };
+    services = { settings, license, privacy, conversationPersistence, conversation, whatsapp, bulk };
     registerIpcHandlers(ipcMain, { ...services, log: events.log, status: events.status });
     await settings.load(); await license.load();
     if (license.isValid()) whatsapp.setup(); else { events.status('auth_failure', { reason: 'Sem licença válida' }); events.log('⚠️ Sem licença válida. Abra a aba "Licença" para cadastrar.'); }
