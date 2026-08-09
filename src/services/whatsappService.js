@@ -87,7 +87,7 @@ class WhatsAppService {
     if (this.privacy.has(from)) return this.log(`(blacklist) Ignorando ${from}`);
     const schedule = this.settings.get().autoReplySchedule;
     if (!isNowWithinSchedule(schedule)) return this.log(`(horário) Fora da janela configurada (${formatSchedule(schedule)}). Sem auto-reply para ${from}.`);
-    const result = this.conversation.handle(from, body);
+    const result = await this.conversation.handle(from, body);
     if (result.type !== 'message') return;
     try {
       await this.client.sendMessage(from, result.text);
