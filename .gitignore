@@ -8,3 +8,4 @@ wpp-bot-electron-*/
 !public_key.pem
 .env
 dist.rar
+.wwebjs_cache/
