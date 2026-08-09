@@ -23,11 +23,12 @@ test('responde à opção selecionada e permite voltar ao menu', async () => {
   assert.match((await service.handle('5511@c.us', '0')).text, /Escolha uma opção/);
 });
 
-test('pausa a automação durante atendimento humano', async () => {
-  const service = createService(); await service.handle('5511@c.us', 'olá');
-  assert.equal((await service.handle('5511@c.us', '9')).event, 'handoff');
-  assert.equal((await service.handle('5511@c.us', 'preciso de ajuda')).type, 'handoff-active');
-  assert.equal((await service.handle('5511@c.us', 'menu')).event, 'menu:root');
+test('pausa a automação durante atendimento humano', () => {
+  const service = createService();
+  service.handle('5511@c.us', 'olá');
+  assert.equal(service.handle('5511@c.us', '9').event, 'handoff');
+  assert.equal(service.handle('5511@c.us', 'preciso de ajuda').type, 'handoff-active');
+  assert.equal(service.handle('5511@c.us', 'menu').event, 'menu:root');
 });
 
 test('informa quando a opção não existe', async () => {
@@ -69,4 +70,32 @@ test('coleta dados do contato e segue para o próximo nó', async () => {
   assert.match((await service.handle('5511@c.us', '1')).text, /Qual é seu nome/);
   assert.match((await service.handle('5511@c.us', 'Maria')).text, /Obrigado/);
   assert.equal(captured.name, 'Maria');
+});
+
+test('navega por submenus e volta ao menu anterior', () => {
+  const service = createService({ flow: {
+    root: 'main',
+    nodes: {
+      main: { type: 'menu', message: 'Menu principal', options: [{ key: '1', label: 'Produtos', target: 'products' }] },
+      products: { type: 'menu', message: 'Escolha um produto', options: [{ key: '1', label: 'Catálogo', response: 'Aqui está o catálogo.' }] },
+    },
+  } });
+
+  assert.match(service.handle('5511@c.us', 'olá').text, /Menu principal/);
+  assert.match(service.handle('5511@c.us', '1').text, /Escolha um produto/);
+  assert.match(service.handle('5511@c.us', '1').text, /Aqui está o catálogo/);
+  assert.match(service.handle('5511@c.us', 'voltar').text, /Menu principal/);
+});
+
+test('comando menu retorna à raiz a partir de qualquer nível', () => {
+  const service = createService({ flow: {
+    root: 'main',
+    nodes: {
+      main: { type: 'menu', message: 'Raiz', options: [{ key: '1', label: 'Submenu', target: 'sub' }] },
+      sub: { type: 'menu', message: 'Segundo nível', options: [] },
+    },
+  } });
+  service.handle('5511@c.us', 'olá');
+  assert.match(service.handle('5511@c.us', '1').text, /Segundo nível/);
+  assert.match(service.handle('5511@c.us', 'menu').text, /Raiz/);
 });

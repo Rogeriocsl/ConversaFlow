@@ -24,16 +24,11 @@ function sanitizeFlowDefinition(flow) {
     if (!value || typeof value !== 'object') continue;
     const nodeId = String(id).trim();
     if (!nodeId) continue;
-    const type = ['menu', 'message', 'collect'].includes(value.type) ? value.type : 'menu';
     nodes[nodeId] = {
       id: nodeId,
-      type,
+      type: value.type === 'message' ? 'message' : 'menu',
       message: String(value.message || '').trim(),
       options: sanitizeOptions(value.options),
-      ...(type === 'collect' ? {
-        field: String(value.field || '').trim(),
-        ...(value.target ? { target: String(value.target).trim() } : {}),
-      } : {}),
     };
   }
   const root = String(flow.root || '').trim();
@@ -65,7 +60,7 @@ class ConversationFlowService {
 
   getSession(contactId, flow) {
     const timeoutMs = this.config().sessionTimeoutMinutes * 60000;
-    const session = this.sessions.get(contactId) || this.persistence?.getSession(contactId);
+    const session = this.sessions.get(contactId);
     if (!session || Date.now() - session.updatedAt > timeoutMs || !flow.nodes[session.currentNodeId]) {
       const fresh = { currentNodeId: flow.root, history: [], handedOff: false, updatedAt: Date.now() };
       this.sessions.set(contactId, fresh);
@@ -95,14 +90,6 @@ class ConversationFlowService {
     return { type: 'message', text: this.renderNode(flow.nodes[session.currentNodeId]), event: `menu:${session.currentNodeId}` };
   }
 
-  async saveInteraction(contactId, session, input, result) {
-    this.sessions.set(contactId, session);
-    await this.persistence?.saveSession(contactId, session);
-    await this.persistence?.appendHistory(contactId, { direction: 'in', text: input, nodeId: session.currentNodeId });
-    if (result.type === 'message') await this.persistence?.appendHistory(contactId, { direction: 'out', text: result.text, event: result.event, nodeId: session.currentNodeId });
-    return result;
-  }
-
   async handle(contactId, text) {
     const config = this.config();
     if (!config.enabled) return { type: 'disabled' };
@@ -112,22 +99,15 @@ class ConversationFlowService {
     const backCommands = new Set(['0', 'voltar']);
     const { session, isNew } = this.getSession(contactId, flow);
 
-    if (menuCommands.has(input)) return this.saveInteraction(contactId, session, text, this.goToRoot(session, flow));
-    if (backCommands.has(input)) return this.saveInteraction(contactId, session, text, this.goBack(session, flow));
+    if (menuCommands.has(input)) return this.goToRoot(session, flow);
+    if (backCommands.has(input)) return this.goBack(session, flow);
     if (session.handedOff) return { type: 'handoff-active' };
-    if (isNew) return this.saveInteraction(contactId, session, text, { type: 'message', text: this.renderNode(flow.nodes[flow.root]), event: 'menu:root' });
+    if (isNew) return { type: 'message', text: this.renderNode(flow.nodes[flow.root]), event: 'menu:root' };
 
     const node = flow.nodes[session.currentNodeId];
-    if (node.type === 'collect') {
-      if (node.field) await this.persistence?.setContactData(contactId, node.field, String(text || '').trim());
-      const target = node.target && flow.nodes[node.target] ? node.target : flow.root;
-      session.currentNodeId = target;
-      const result = { type: 'message', text: this.renderNode(flow.nodes[target]), event: `collected:${node.field || 'value'}` };
-      return this.saveInteraction(contactId, session, text, result);
-    }
-    if (node.type !== 'menu') return this.saveInteraction(contactId, session, text, { type: 'message', text: this.renderNode(node), event: `message:${node.id}` });
+    if (node.type !== 'menu') return { type: 'message', text: this.renderNode(node), event: `message:${node.id}` };
     const option = node.options.find(item => this.normalize(item.key) === input);
-    if (!option) return this.saveInteraction(contactId, session, text, { type: 'message', text: `${config.invalidOptionMessage}\n\n${this.renderNode(node)}`, event: `invalid:${node.id}` });
+    if (!option) return { type: 'message', text: `${config.invalidOptionMessage}\n\n${this.renderNode(node)}`, event: `invalid:${node.id}` };
 
     if (option.action === 'handoff') {
       session.handedOff = true;
@@ -139,7 +119,12 @@ class ConversationFlowService {
       session.currentNodeId = option.target;
       return this.saveInteraction(contactId, session, text, { type: 'message', text: this.renderNode(flow.nodes[option.target]), event: `node:${option.target}` });
     }
-    return this.saveInteraction(contactId, session, text, { type: 'message', text: `${option.response}\n\nDigite *0* para voltar.`, event: `option:${node.id}:${option.key}` });
+    if (option.target && flow.nodes[option.target]) {
+      session.history.push(node.id);
+      session.currentNodeId = option.target;
+      return { type: 'message', text: this.renderNode(flow.nodes[option.target]), event: `node:${option.target}` };
+    }
+    return { type: 'message', text: `${option.response}\n\nDigite *0* para voltar.`, event: `option:${node.id}:${option.key}` };
   }
 }
 
