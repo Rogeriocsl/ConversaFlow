@@ -2,7 +2,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const { clamp, computeJitteredDelay } = require('../utils/delay');
 const { DEFAULT_SCHEDULE, sanitizeSchedule, formatSchedule } = require('../utils/schedule');
-const { DEFAULT_MENU_OPTIONS } = require('./conversationFlowService');
+const { DEFAULT_MENU_OPTIONS, sanitizeFlowDefinition } = require('./conversationFlowService');
 
 class SettingsService {
   constructor({ userDataPath, env = process.env, onUpdated = () => {}, log = () => {} }) {
@@ -25,6 +25,7 @@ class SettingsService {
         handoffMessage: 'Certo! Encaminhamos sua conversa para um atendente.',
         sessionTimeoutMinutes: 30,
         options: DEFAULT_MENU_OPTIONS.map(option => ({ ...option })),
+        flow: null,
       },
     };
     this.settings = this.sanitize(this.defaults);
@@ -58,6 +59,7 @@ class SettingsService {
         handoffMessage: String(automation.handoffMessage || this.defaults.automation.handoffMessage).trim(),
         sessionTimeoutMinutes: clamp(automation.sessionTimeoutMinutes, 1, 1440, 30),
         options,
+        flow: sanitizeFlowDefinition(automation.flow),
       },
     };
   }
