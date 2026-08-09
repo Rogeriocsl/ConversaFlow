@@ -543,6 +543,14 @@
         font-size: 11px;
         color: var(--muted-2);
       }
+      .flow-toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+      .flow-toolbar select { flex:1; }
+      .flow-menu-card, .flow-option, .flow-preview-wrap { border:1px solid var(--border-2); border-radius:10px; padding:12px; margin:10px 0; background:var(--surface-2); }
+      .flow-grid { display:grid; grid-template-columns:110px 1fr 180px; gap:10px; }
+      .flow-option label, .flow-menu-card label { margin-top:8px; }
+      .flow-remove { margin-top:10px; }
+      .flow-preview-wrap pre { white-space:pre-wrap; max-height:320px; overflow:auto; }
+      @media (max-width: 760px) { .flow-grid { grid-template-columns:1fr; } .flow-toolbar { flex-wrap:wrap; } }
     </style>
   </head>
   <body>
@@ -728,9 +736,11 @@
               placeholder="Olá! Como podemos ajudar?"
             ></textarea>
 
-            <label for="automation-options" style="margin-top: 14px">Opções e respostas</label>
-            <p class="subtle">Use uma linha por opção: <code>número | título | resposta</code>. Para atendimento humano, acrescente <code>| atendente</code>.</p>
-            <textarea id="automation-options" rows="9" placeholder="1 | Conhecer nossos produtos | Confira nosso catálogo.&#10;9 | Falar com atendente | Aguarde um momento. | atendente"></textarea>
+            <div style="margin-top: 14px">
+              <label>Construtor de fluxo</label>
+              <p class="subtle">Crie menus e escolha o comportamento de cada opção sem editar JSON.</p>
+              <div id="flow-editor"></div>
+            </div>
 
             <div class="row" style="gap: 12px; margin-top: 12px">
               <div style="flex: 1">
@@ -1286,6 +1296,7 @@
     </div>
 
     <div id="toast-root" class="toast-root" aria-live="polite"></div>
+    <script src="flowEditor.js"></script>
     <script src="renderer.js"></script>
   </body>
 </html>

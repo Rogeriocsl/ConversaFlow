@@ -186,7 +186,8 @@ const autoCountEl = $('#auto-count');
 const autoCooldownEl = $('#auto-cooldown');
 const autoCooldownNote = $('#auto-cooldown-note');
 const automationEnabled = $('#automation-enabled');
-const automationOptions = $('#automation-options');
+const flowEditorRoot = $('#flow-editor');
+const flowEditor = new window.FlowEditor(flowEditorRoot, () => renderAutoPreview());
 const automationInvalid = $('#automation-invalid');
 const automationTimeout = $('#automation-timeout');
 
@@ -278,27 +279,13 @@ function getCtx() {
 function renderAutoPreview() {
   const text = (autoTextEl.value || '').trim();
   const ctx = getCtx();
-  const menu = parseAutomationOptions(automationOptions?.value).map(option => `${option.key} - ${option.label}`).join('\n');
+  const rootNode = flowEditor.getFlow().nodes[flowEditor.getFlow().root];
+  const menu = (rootNode?.options || []).map(option => `${option.key} - ${option.label}`).join('\n');
   const ex = `${applyTemplatePreview(text, ctx)}${menu ? `\n\n${menu}\n\nResponda com o número da opção desejada.` : ''}`;
   autoPreview.textContent = ex || '—';
 }
 
-function parseAutomationOptions(value) {
-  return String(value || '').split(/\r?\n/).map(line => {
-    const [key, label, response, action] = line.split('|').map(part => part.trim());
-    if (!key || !label) return null;
-    return { key, label, response: response || '', ...(String(action || '').toLowerCase() === 'atendente' ? { action: 'handoff' } : {}) };
-  }).filter(Boolean);
-}
-
-function formatAutomationOptions(options) {
-  return (Array.isArray(options) ? options : []).map(option =>
-    [option.key, option.label, option.response, option.action === 'handoff' ? 'atendente' : ''].filter((part, index) => index < 3 || part).join(' | ')
-  ).join('\n');
-}
-
 autoTextEl.addEventListener('input', () => { updateAutoCount(); renderAutoPreview(); });
-automationOptions?.addEventListener('input', renderAutoPreview);
 autoPreviewBtn?.addEventListener('click', renderAutoPreview);
 ctxNameEl?.addEventListener('input', renderAutoPreview);
 ctxFirstEl?.addEventListener('input', renderAutoPreview);
@@ -387,7 +374,7 @@ rateJitterEl?.addEventListener('input', (e) => { const pct = e.target.value; ren
     const automation = s?.automation || {};
     autoTextEl.value = automation.welcomeMessage || s?.autoReplyText || '';
     automationEnabled.checked = automation.enabled !== false;
-    automationOptions.value = formatAutomationOptions(automation.options);
+    flowEditor.load(automation);
     automationInvalid.value = automation.invalidOptionMessage || 'Não entendi essa opção.';
     automationTimeout.value = String(automation.sessionTimeoutMinutes || 30);
     updateAutoCount();
@@ -421,7 +408,7 @@ window.api.onSettingsUpdated((s) => {
   if (s?.automation) {
     autoTextEl.value = s.automation.welcomeMessage || '';
     automationEnabled.checked = s.automation.enabled !== false;
-    automationOptions.value = formatAutomationOptions(s.automation.options);
+    flowEditor.load(s.automation);
     automationInvalid.value = s.automation.invalidOptionMessage || '';
     automationTimeout.value = String(s.automation.sessionTimeoutMinutes || 30);
     updateAutoCount(); renderAutoPreview();
@@ -482,12 +469,14 @@ window.addEventListener('keydown', (ev) => {
 // Salvar automação por menu
 autoSaveBtn?.addEventListener('click', async () => {
   const txt = (autoTextEl.value || '').trim();
-  const options = parseAutomationOptions(automationOptions.value);
+  const flowErrors = flowEditor.validate();
   if (!txt) return addToast('Informe a saudação do menu', 'danger');
-  if (!options.length) return addToast('Cadastre pelo menos uma opção válida', 'danger');
+  if (flowErrors.length) return addToast(flowErrors[0], 'danger');
   autoSaveBtn.disabled = true;
   autoStatusEl.textContent = 'Salvando...';
   try {
+    const flow = flowEditor.getFlow();
+    flow.nodes[flow.root].message = txt;
     await window.api.setSettings({ automation: {
       enabled: automationEnabled.checked,
       welcomeMessage: txt,
@@ -495,7 +484,8 @@ autoSaveBtn?.addEventListener('click', async () => {
       invalidOptionMessage: automationInvalid.value.trim() || 'Não entendi essa opção.',
       handoffMessage: 'Certo! Encaminhamos sua conversa para um atendente.',
       sessionTimeoutMinutes: Number(automationTimeout.value || 30),
-      options,
+      options: [],
+      flow,
     } });
     autoStatusEl.textContent = 'Automação salva ✔️';
     addToast('Menu automático salvo', 'success');

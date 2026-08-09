@@ -6,6 +6,17 @@ Plataforma desktop em Electron para automação conversacional e campanhas pelo 
 
 Ao receber a primeira mensagem, o ConversaFlow apresenta um menu configurável. Cada contato mantém sua própria sessão por até 30 minutos. Os comandos `menu`, `início`, `0` e `voltar` reiniciam a navegação; `9` encaminha para atendimento humano; e `sair`, `parar`, `stop` ou `cancelar` registram o opt-out.
 
+### Editor visual
+
+Na aba **Automação**, o construtor visual permite criar e remover menus e opções sem editar JSON ou usar separadores manuais. Cada opção pode:
+
+- responder com uma mensagem;
+- abrir outro submenu;
+- coletar um dado do contato e seguir o fluxo;
+- transferir a conversa para atendimento humano.
+
+A pré-visualização apresenta a árvore completa e indica números duplicados, destinos ausentes e campos de coleta incompletos antes de salvar.
+
 ## Arquitetura
 
 ```text
