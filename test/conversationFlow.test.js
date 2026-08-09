@@ -35,11 +35,39 @@ test('pausa a automação durante atendimento humano', () => {
   service.handle('5511@c.us', 'olá');
   assert.equal(service.handle('5511@c.us', '9').event, 'handoff');
   assert.equal(service.handle('5511@c.us', 'preciso de ajuda').type, 'handoff-active');
-  assert.equal(service.handle('5511@c.us', 'menu').event, 'menu');
+  assert.equal(service.handle('5511@c.us', 'menu').event, 'menu:root');
 });
 
 test('informa quando a opção não existe', () => {
   const service = createService();
   service.handle('5511@c.us', 'olá');
   assert.match(service.handle('5511@c.us', '99').text, /Opção inválida/);
+});
+
+test('navega por submenus e volta ao menu anterior', () => {
+  const service = createService({ flow: {
+    root: 'main',
+    nodes: {
+      main: { type: 'menu', message: 'Menu principal', options: [{ key: '1', label: 'Produtos', target: 'products' }] },
+      products: { type: 'menu', message: 'Escolha um produto', options: [{ key: '1', label: 'Catálogo', response: 'Aqui está o catálogo.' }] },
+    },
+  } });
+
+  assert.match(service.handle('5511@c.us', 'olá').text, /Menu principal/);
+  assert.match(service.handle('5511@c.us', '1').text, /Escolha um produto/);
+  assert.match(service.handle('5511@c.us', '1').text, /Aqui está o catálogo/);
+  assert.match(service.handle('5511@c.us', 'voltar').text, /Menu principal/);
+});
+
+test('comando menu retorna à raiz a partir de qualquer nível', () => {
+  const service = createService({ flow: {
+    root: 'main',
+    nodes: {
+      main: { type: 'menu', message: 'Raiz', options: [{ key: '1', label: 'Submenu', target: 'sub' }] },
+      sub: { type: 'menu', message: 'Segundo nível', options: [] },
+    },
+  } });
+  service.handle('5511@c.us', 'olá');
+  assert.match(service.handle('5511@c.us', '1').text, /Segundo nível/);
+  assert.match(service.handle('5511@c.us', 'menu').text, /Raiz/);
 });
